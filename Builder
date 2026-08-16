@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smash Tournament Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Chakra+Petch:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0a1c;--bg2:#12102a;--panel:#1b1838;--panel-edge:#2c274f;
+    --cyan:#25e5ff;--magenta:#ff2f7e;--gold:#ffce45;
+    --ink:#f3f1ff;--muted:#8681ad;--win:#20f0a0;--warn:#ffb648;--danger:#ff5470;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Chakra Petch',sans-serif;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(255,47,126,.15), transparent 42%),
+      radial-gradient(circle at 92% 100%, rgba(37,229,255,.15), transparent 42%),
+      var(--bg);
+    color:var(--ink);min-height:100vh;padding:26px 16px 60px;
+  }
+  header{max-width:1160px;margin:0 auto 22px;text-align:center}
+  .kicker{font-size:.76rem;letter-spacing:.4em;text-transform:uppercase;color:var(--cyan);font-weight:700;margin-bottom:6px}
+  h1{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(2.1rem,6.5vw,4.2rem);line-height:.9;text-transform:uppercase;background:linear-gradient(100deg,var(--magenta),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 20px rgba(37,229,255,.22))}
+  .sub{color:var(--muted);margin-top:9px;font-size:.92rem;letter-spacing:.04em}
+
+  /* ---------- SETUP ---------- */
+  .setup{max-width:640px;margin:0 auto}
+  .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--panel-edge);border-radius:14px;padding:20px;box-shadow:0 8px 26px rgba(0,0,0,.34);margin-bottom:18px}
+  .card h2{font-family:'Anton',sans-serif;font-weight:400;font-size:1.05rem;text-transform:uppercase;letter-spacing:.08em;color:var(--cyan);margin-bottom:4px}
+  .card .desc{color:var(--muted);font-size:.82rem;margin-bottom:14px}
+  .roster{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  @media(max-width:520px){.roster{grid-template-columns:1fr}}
+  .prow{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--panel-edge);border-radius:9px;padding:4px 4px 4px 10px}
+  .prow .num{font-family:'Anton',sans-serif;font-size:.72rem;color:var(--muted);min-width:18px;text-align:center}
+  .prow input{flex:1;background:transparent;border:none;color:var(--ink);font-family:inherit;font-size:.94rem;font-weight:600;padding:7px 2px;min-width:0}
+  .prow input:focus{outline:none}
+  .prow input::placeholder{color:#4f4a72}
+  .prow .del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px 7px;border-radius:6px;line-height:1}
+  .prow .del:hover{color:var(--danger);background:rgba(255,84,112,.1)}
+  .addrow{margin-top:12px}
+  .ghostbtn{width:100%;background:transparent;border:1px dashed var(--panel-edge);border-radius:9px;color:var(--muted);font-family:inherit;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.78rem;padding:11px;cursor:pointer;transition:.15s}
+  .ghostbtn:hover{border-color:var(--cyan);color:var(--cyan)}
+
+  .optgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:520px){.optgrid{grid-template-columns:1fr}}
+  .optlabel{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px}
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;background:var(--bg2);border:1px solid var(--panel-edge);color:var(--muted);font-family:inherit;font-weight:700;font-size:.9rem;padding:10px;border-radius:8px;cursor:pointer;transition:.13s}
+  .seg button.on{border-color:var(--cyan);color:var(--cyan);background:rgba(37,229,255,.1)}
+  .toggle{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;margin-top:4px}
+  .toggle input{appearance:none;width:42px;height:24px;background:var(--bg2);border:1px solid var(--panel-edge);border-radius:20px;position:relative;cursor:pointer;transition:.15s;flex:none}
+  .toggle input::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:.15s}
+  .toggle input:checked{background:rgba(37,229,255,.18);border-color:var(--cyan)}
+  .toggle input:checked::after{left:20px;background:var(--cyan)}
+  .toggle span{font-size:.9rem;font-weight:600}
+
+  .startbtn{width:100%;font-family:'Anton',sans-serif;font-weight:400;letter-spacing:.1em;text-transform:uppercase;font-size:1.15rem;color:#0b0a1c;background:linear-gradient(100deg,var(--cyan),var(--magenta));border:none;border-radius:12px;padding:15px;cursor:pointer;transition:.15s;box-shadow:0 6px 20px rgba(255,47,126,.28)}
+  .startbtn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .startbtn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none}
+  .err{color:var(--warn);font-size:.82rem;margin-top:10px;text-align:center;min-height:1.1em;letter-spacing:.02em}
+
+  /* ---------- RUN ---------- */
+  .topbar{max-width:1160px;margin:0 auto 8px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+  .stage-label{max-width:1160px;margin:30px auto 16px;display:flex;align-items:center;gap:14px}
+  .stage-label h2{font-family:'Anton',sans-serif;font-weight:400;font-size:1.3rem;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+  .stage-label .line{height:1px;background:var(--panel-edge);flex:1}
+  .stage-label .tag{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+  .groups{max-width:1160px;margin:0 auto;display:grid;gap:18px}
+  .group{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--panel-edge);border-radius:14px;padding:16px;box-shadow:0 8px 26px rgba(0,0,0,.34)}
+  .group > h3{font-family:'Anton',sans-serif;font-weight:400;font-size:1.1rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;color:var(--cyan)}
+  .group:nth-child(even) > h3{color:var(--magenta)}
+  table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:.9rem}
+  thead th{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 8px 7px;font-weight:700}
+  thead th.c,tbody td.c{text-align:center}
+  tbody td{padding:8px;border-top:1px solid var(--panel-edge);font-weight:600}
+  tbody tr.adv td{color:var(--win)}
+  .rank{font-family:'Anton',sans-serif;color:var(--muted);width:24px}
+  tr.adv .rank{color:var(--win)}
+  .advbadge{font-size:.54rem;letter-spacing:.1em;background:rgba(32,240,160,.16);color:var(--win);border:1px solid var(--win);border-radius:4px;padding:1px 5px;margin-left:7px;vertical-align:middle}
+  .tiewarn{color:var(--warn);font-size:.69rem;margin:-6px 0 12px;letter-spacing:.02em}
+  .rr-round{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:10px 2px 6px;font-weight:700}
+  .rr-round .bye{color:#5b5580;margin-left:8px}
+  .match{display:flex;align-items:stretch;border:1px solid var(--panel-edge);border-radius:9px;overflow:hidden;margin-bottom:7px;background:var(--bg2)}
+  .fighter{flex:1;display:flex;align-items:center;padding:9px 10px;cursor:pointer;background:transparent;border:none;color:var(--ink);font-family:inherit;font-size:.88rem;font-weight:600;text-align:left;transition:background .13s;min-width:0}
+  .fighter:hover:not(:disabled){background:rgba(37,229,255,.08)}
+  .fighter:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
+  .fighter .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fighter.won{background:linear-gradient(90deg,rgba(32,240,160,.2),transparent);color:var(--win)}
+  .fighter.won::after{content:'✓';margin-left:auto;font-size:.7rem;color:var(--win)}
+  .fighter.lost{opacity:.42;text-decoration:line-through;text-decoration-thickness:1px}
+  .vsbar{display:flex;align-items:center;padding:0 8px;font-family:'Anton',sans-serif;font-size:.58rem;color:var(--magenta);background:var(--panel);letter-spacing:.1em}
+
+  .bracket{max-width:1160px;margin:0 auto;display:grid;gap:14px;align-items:stretch}
+  .col{display:flex;flex-direction:column;justify-content:space-around;gap:14px}
+  .col-head{font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center;padding-bottom:4px;border-bottom:1px solid var(--panel-edge)}
+  .col-head.hot{color:var(--gold)}
+  .kmatch{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--panel-edge);border-radius:12px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.34)}
+  .slot{display:flex;align-items:center;gap:9px;padding:12px 12px;cursor:pointer;border:none;background:transparent;width:100%;text-align:left;color:var(--ink);font-family:inherit;font-size:.96rem;font-weight:600;transition:background .14s}
+  .slot:hover:not(:disabled){background:rgba(37,229,255,.09)}
+  .slot:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
+  .slot:disabled{cursor:default}
+  .seedtag{font-family:'Anton',sans-serif;font-size:.62rem;color:var(--muted);border:1px solid var(--panel-edge);border-radius:5px;padding:1px 5px;white-space:nowrap}
+  .slot .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kdiv{height:1px;background:var(--panel-edge);position:relative}
+  .kdiv span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:'Anton',sans-serif;font-size:.56rem;background:var(--bg2);color:var(--magenta);padding:0 7px;letter-spacing:.12em}
+  .slot.won{background:linear-gradient(90deg,rgba(32,240,160,.18),transparent);color:var(--win)}
+  .slot.won .seedtag{border-color:var(--win);color:var(--win)}
+  .slot.won::after{content:'▶';margin-left:auto;color:var(--win);font-size:.64rem}
+  .slot.lost{opacity:.4;text-decoration:line-through}
+  .slot.empty{color:var(--muted);font-style:italic;font-weight:500}
+  .champ-col{justify-content:center}
+  .trophy{background:linear-gradient(180deg,#241d12,#17130a);border:1px solid #4a3c17;border-radius:16px;padding:22px 14px;text-align:center;position:relative;overflow:hidden}
+  .trophy::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(255,206,69,.22),transparent 60%);opacity:0;transition:opacity .6s}
+  .trophy.lit::before{opacity:1}
+  .crown{font-size:2rem;filter:grayscale(1) opacity(.35);transition:.5s}
+  .trophy.lit .crown{filter:none}
+  .champ-label{font-size:.62rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin:8px 0 6px;font-weight:700}
+  .champ-name{font-family:'Anton',sans-serif;font-size:1.4rem;text-transform:uppercase;color:var(--muted)}
+  .trophy.lit .champ-name{color:var(--gold);text-shadow:0 0 22px rgba(255,206,69,.5);animation:pop .4s ease-out}
+  @keyframes pop{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+  .locknote{max-width:1160px;margin:12px auto 0;text-align:center;color:var(--muted);font-size:.82rem}
+  .btn{font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.78rem;color:var(--ink);background:transparent;border:1px solid var(--panel-edge);border-radius:9px;padding:10px 20px;cursor:pointer;transition:.15s}
+  .btn:hover{border-color:var(--magenta);color:var(--magenta);background:rgba(255,47,126,.08)}
+  .hidden{display:none}
+  @media(max-width:780px){.bracket{grid-template-columns:1fr !important;gap:20px}.col{justify-content:flex-start}}
+</style>
+</head>
+<body>
+  <header>
+    <div class="kicker">Super Smash Bros</div>
+    <h1>Tournament Builder</h1>
+    <p class="sub" id="subtitle">Enter your fighters, pick the format, and go</p>
+  </header>
+
+  <!-- SETUP VIEW -->
+  <div class="setup" id="setupView">
+    <div class="card">
+      <h2>Fighters</h2>
+      <p class="desc">Type a name in each slot. Add or remove as many as you like.</p>
+      <div class="roster" id="roster"></div>
+      <div class="addrow"><button class="ghostbtn" id="addPlayer">+ Add fighter</button></div>
+    </div>
+    <div class="card">
+      <h2>Format</h2>
+      <p class="desc">Round-robin within each group, then a knockout bracket of the qualifiers.</p>
+      <div class="optgrid">
+        <div>
+          <div class="optlabel">Number of groups</div>
+          <div class="seg" id="segGroups">
+            <button data-v="2" class="on">2 groups</button>
+            <button data-v="4">4 groups</button>
+          </div>
+        </div>
+        <div>
+          <div class="optlabel">Advance per group</div>
+          <div class="seg" id="segAdv">
+            <button data-v="1">Top 1</button>
+            <button data-v="2" class="on">Top 2</button>
+          </div>
+        </div>
+      </div>
+      <label class="toggle" style="margin-top:16px">
+        <input type="checkbox" id="shuffle" checked>
+        <span>Shuffle fighters into groups randomly</span>
+      </label>
+    </div>
+    <button class="startbtn" id="start">Start Tournament</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <!-- RUN VIEW -->
+  <div id="runView" class="hidden">
+    <div class="topbar">
+      <button class="btn" id="editSetup">&larr; Edit setup</button>
+      <button class="btn" id="resetScores">Reset scores</button>
+      <button class="btn" id="reshuffle">Re-shuffle groups</button>
+    </div>
+    <div class="stage-label"><h2>Group Stage</h2><span class="line"></span><span class="tag">tap the winner of each match</span></div>
+    <div class="groups" id="groups"></div>
+    <div class="stage-label"><h2>Knockout</h2><span class="line"></span><span class="tag" id="koTag"></span></div>
+    <div class="bracket" id="bracket"></div>
+    <p class="locknote" id="locknote"></p>
+  </div>
+
+<script>
+  const LETTERS=['A','B','C','D'];
+  const DEFAULT_ROSTER=["Requiron","Cruz","Stull-weisel","weisel","Quito","Barber","Stock","Houston","Carter J","Carter N"];
+
+  const cfg={roster:DEFAULT_ROSTER.slice(), numGroups:2, adv:2, shuffle:true};
+  const T={groups:{},sched:{},bracket:null,results:{},ko:{}}; // live tournament
+
+  /* ---------------- SETUP ---------------- */
+  function renderRoster(){
+    const r=document.getElementById("roster");r.innerHTML="";
+    cfg.roster.forEach((name,i)=>{
+      const row=document.createElement("div");row.className="prow";
+      row.innerHTML='<span class="num">'+(i+1)+'</span>';
+      const inp=document.createElement("input");
+      inp.type="text";inp.value=name;inp.placeholder="Fighter name";
+      inp.oninput=e=>{cfg.roster[i]=e.target.value;};
+      const del=document.createElement("button");del.className="del";del.innerHTML="✕";del.title="Remove";
+      del.onclick=()=>{cfg.roster.splice(i,1);renderRoster();};
+      row.appendChild(inp);row.appendChild(del);r.appendChild(row);
+    });
+  }
+  document.getElementById("addPlayer").onclick=()=>{cfg.roster.push("");renderRoster();
+    const inputs=document.querySelectorAll("#roster input");if(inputs.length)inputs[inputs.length-1].focus();};
+
+  function bindSeg(id,key){
+    document.getElementById(id).querySelectorAll("button").forEach(b=>{
+      b.onclick=()=>{cfg[key]=+b.dataset.v;
+        b.parentElement.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+        b.classList.add("on");};
+    });
+  }
+  bindSeg("segGroups","numGroups");bindSeg("segAdv","adv");
+  document.getElementById("shuffle").onchange=e=>{cfg.shuffle=e.target.checked;};
+
+  function cleanRoster(){return cfg.roster.map(s=>s.trim()).filter(Boolean);}
+  function validate(){
+    const names=cleanRoster();
+    if(names.length<cfg.numGroups*cfg.adv) return `Need at least ${cfg.numGroups*cfg.adv} fighters for ${cfg.numGroups} groups advancing ${cfg.adv} each.`;
+    const minSize=Math.floor(names.length/cfg.numGroups);
+    if(minSize<2) return `Not enough fighters to fill ${cfg.numGroups} groups (need 2+ per group).`;
+    if(minSize<cfg.adv) return `Each group needs at least ${cfg.adv} fighters to advance ${cfg.adv}.`;
+    return null;
+  }
+  document.getElementById("start").onclick=()=>{
+    const msg=validate();
+    if(msg){document.getElementById("err").textContent=msg;return;}
+    document.getElementById("err").textContent="";
+    buildTournament();
+    document.getElementById("setupView").classList.add("hidden");
+    document.getElementById("runView").classList.remove("hidden");
+    document.getElementById("subtitle").textContent="Round-robin groups, then knockout";
+    render();window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  /* ---------------- BUILD ---------------- */
+  function shuffled(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  function schedule(n){
+    const odd=n%2!==0, m=odd?n+1:n; let arr=[...Array(m).keys()]; const rounds=[];
+    for(let r=0;r<m-1;r++){
+      const matches=[]; let bye=null;
+      for(let i=0;i<m/2;i++){
+        const a=arr[i],b=arr[m-1-i];
+        if(odd&&a===m-1)bye=b; else if(odd&&b===m-1)bye=a; else matches.push([a,b]);
+      }
+      rounds.push({matches,bye:odd?bye:null});
+      arr=[arr[0],arr[m-1],...arr.slice(1,m-1)];
+    }
+    return rounds;
+  }
+  function seedOrder(g,adv){
+    if(g===2&&adv===2)return['A1','B2','B1','A2'];
+    if(g===2&&adv===1)return['A1','B1'];
+    if(g===4&&adv===2)return['A1','B2','C1','D2','B1','A2','D1','C2'];
+    if(g===4&&adv===1)return['A1','B1','C1','D1'];
+    return null;
+  }
+  function buildBracket(seedKeys){
+    const matches={},rounds=[],parentOf={};
+    let level=seedKeys.map(k=>({type:'seed',key:k})),ri=0;
+    while(level.length>1){
+      const rm=[],next=[];
+      for(let i=0;i<level.length;i+=2){
+        const id='r'+ri+'m'+(i/2);
+        matches[id]={src:[level[i],level[i+1]]};rm.push(id);next.push({type:'win',mid:id});
+      }
+      rounds.push(rm);level=next;ri++;
+    }
+    const R=rounds.length;
+    const shortByDist=d=>d===1?'F':d===2?'SF':d===3?'QF':'R'+(1<<d);
+    rounds.forEach((rm,r)=>{const d=R-r;rm.forEach((id,pos)=>{matches[id].short=shortByDist(d)+(pos+1);});});
+    for(let r=0;r<R-1;r++)rounds[r].forEach((id,pos)=>{parentOf[id]=rounds[r+1][pos>>1];});
+    return {rounds,matches,parentOf,R};
+  }
+  function fullByDist(d){return d===1?'Final':d===2?'Semifinals':d===3?'Quarterfinals':'Round of '+(1<<d);}
+
+  function buildTournament(){
+    const names=cleanRoster();
+    const order=cfg.shuffle?shuffled(names):names.slice();
+    const letters=LETTERS.slice(0,cfg.numGroups);
+    T.groups={};letters.forEach(L=>T.groups[L]=[]);
+    order.forEach((nm,i)=>T.groups[letters[i%cfg.numGroups]].push(nm));
+    T.sched={};letters.forEach(L=>T.sched[L]=schedule(T.groups[L].length));
+    T.bracket=buildBracket(seedOrder(cfg.numGroups,cfg.adv));
+    T.results={};letters.forEach(L=>T.results[L]={});
+    T.ko={};
+  }
+
+  /* ---------------- STANDINGS ---------------- */
+  const keyOf=(i,j)=>Math.min(i,j)+"-"+Math.max(i,j);
+  const totalMatches=L=>{const n=T.groups[L].length;return n*(n-1)/2;};
+  function standings(L){
+    const ps=T.groups[L],res=T.results[L],n=ps.length;
+    const wins=Array(n).fill(0),played=Array(n).fill(0);
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const w=res[keyOf(i,j)];if(w!=null){wins[w]++;played[i]++;played[j]++;}}
+    let e=ps.map((name,idx)=>({idx,name,w:wins[idx],l:played[idx]-wins[idx]}));
+    e.sort((a,b)=>{if(b.w!==a.w)return b.w-a.w;const h=res[keyOf(a.idx,b.idx)];if(h!=null)return h===a.idx?-1:1;return a.idx-b.idx;});
+    const tie=e[cfg.adv]!==undefined&&e[cfg.adv-1].w===e[cfg.adv].w;
+    return {e,tie};
+  }
+  const groupDone=L=>Object.keys(T.results[L]).length===totalMatches(L);
+  const allGroupsDone=()=>Object.keys(T.groups).every(groupDone);
+
+  function pickGroup(L,i,j,winner){T.results[L][keyOf(i,j)]=winner;T.ko={};render();}
+  function pickKo(mid,side){if(T.ko[mid]===side)return;T.ko[mid]=side;let p=T.bracket.parentOf[mid];while(p){delete T.ko[p];p=T.bracket.parentOf[p];}render();}
+
+  /* ---------------- RENDER: GROUPS ---------------- */
+  function fighterBtn(L,i,j,idx){
+    const b=document.createElement("button");b.className="fighter";
+    const d=T.results[L][keyOf(i,j)];
+    if(d===idx)b.classList.add("won");else if(d!=null)b.classList.add("lost");
+    b.innerHTML='<span class="nm">'+T.groups[L][idx]+'</span>';
+    b.onclick=()=>pickGroup(L,i,j,idx);return b;
+  }
+  function groupCard(L){
+    const wrap=document.createElement("div");wrap.className="group";
+    wrap.innerHTML='<h3>Group '+L+'</h3>';
+    const {e,tie}=standings(L);
+    const tbl=document.createElement("table");
+    tbl.innerHTML='<thead><tr><th class="c">#</th><th>Fighter</th><th class="c">W</th><th class="c">L</th></tr></thead>';
+    const tb=document.createElement("tbody");
+    e.forEach((row,r)=>{
+      const tr=document.createElement("tr");if(r<cfg.adv)tr.className="adv";
+      tr.innerHTML='<td class="c rank">'+(r+1)+'</td><td>'+row.name+(r<cfg.adv?'<span class="advbadge">ADV</span>':'')+'</td><td class="c">'+row.w+'</td><td class="c">'+row.l+'</td>';
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb);wrap.appendChild(tbl);
+    if(tie&&groupDone(L)){const t=document.createElement("div");t.className="tiewarn";
+      t.textContent='⚠ Tie at the cutoff — play a tiebreaker for the last spot, then adjust picks.';wrap.appendChild(t);}
+    T.sched[L].forEach((rnd,ri)=>{
+      const rh=document.createElement("div");rh.className="rr-round";
+      rh.innerHTML="Round "+(ri+1)+(rnd.bye!=null?'<span class="bye">bye: '+T.groups[L][rnd.bye]+'</span>':'');
+      wrap.appendChild(rh);
+      rnd.matches.forEach(([i,j])=>{
+        const m=document.createElement("div");m.className="match";
+        m.appendChild(fighterBtn(L,i,j,i));
+        const v=document.createElement("div");v.className="vsbar";v.textContent="VS";m.appendChild(v);
+        m.appendChild(fighterBtn(L,i,j,j));wrap.appendChild(m);
+      });
+    });
+    return wrap;
+  }
+
+  /* ---------------- RENDER: KNOCKOUT ---------------- */
+  function qualifier(key){
+    const L=key[0],rank=+key.slice(1);
+    if(!groupDone(L))return null;
+    const e=standings(L).e;return e[rank-1]?e[rank-1].name:null;
+  }
+  function koName(node){
+    if(node.type==='seed')return qualifier(node.key);
+    const w=T.ko[node.mid];if(!w)return null;
+    return koName(T.bracket.matches[node.mid].src[w==='a'?0:1]);
+  }
+  function tagOf(node){return node.type==='seed'?node.key:T.bracket.matches[node.mid].short;}
+  function koSlot(mid,side){
+    const node=T.bracket.matches[mid].src[side==='a'?0:1];
+    const name=koName(node);
+    const b=document.createElement("button");b.className="slot";
+    if(name===null){b.classList.add("empty");b.disabled=true;
+      b.innerHTML='<span class="seedtag">'+tagOf(node)+'</span><span class="nm">TBD</span>';return b;}
+    const d=T.ko[mid];if(d===side)b.classList.add("won");else if(d)b.classList.add("lost");
+    b.innerHTML='<span class="seedtag">'+tagOf(node)+'</span><span class="nm">'+name+'</span>';
+    b.onclick=()=>pickKo(mid,side);return b;
+  }
+  function koCard(mid){
+    const c=document.createElement("div");c.className="kmatch";
+    c.appendChild(koSlot(mid,'a'));
+    const dv=document.createElement("div");dv.className="kdiv";dv.innerHTML='<span>VS</span>';c.appendChild(dv);
+    c.appendChild(koSlot(mid,'b'));return c;
+  }
+  function renderBracket(){
+    const bk=document.getElementById("bracket");bk.innerHTML="";
+    const {rounds,R}=T.bracket;
+    bk.style.gridTemplateColumns='repeat('+(R+1)+',1fr)';
+    rounds.forEach((rm,ri)=>{
+      const col=document.createElement("div");col.className="col";
+      const h=document.createElement("div");h.className="col-head"+(ri===R-1?" hot":"");
+      h.textContent=fullByDist(R-ri);col.appendChild(h);
+      rm.forEach(id=>col.appendChild(koCard(id)));bk.appendChild(col);
+    });
+    // champion
+    const cc=document.createElement("div");cc.className="col champ-col";
+    const ch=document.createElement("div");ch.className="col-head hot";ch.textContent="Champion";cc.appendChild(ch);
+    const finalId=rounds[R-1][0];const fw=T.ko[finalId];
+    const champ=fw?koName(T.bracket.matches[finalId].src[fw==='a'?0:1]):null;
+    const t=document.createElement("div");t.className="trophy"+(champ?" lit":"");
+    t.innerHTML='<div class="crown">👑</div><div class="champ-label">'+(champ?"Winner":"To be crowned")+'</div><div class="champ-name">'+(champ?champ:"—")+'</div>';
+    cc.appendChild(t);bk.appendChild(cc);
+  }
+
+  function render(){
+    const gr=document.getElementById("groups");gr.innerHTML="";
+    const letters=Object.keys(T.groups);
+    gr.style.gridTemplateColumns='repeat('+Math.min(letters.length,2)+',1fr)';
+    if(window.matchMedia('(max-width:780px)').matches)gr.style.gridTemplateColumns='1fr';
+    letters.forEach(L=>gr.appendChild(groupCard(L)));
+    renderBracket();
+    document.getElementById("koTag").textContent=cfg.numGroups+" groups · top "+cfg.adv+" advance";
+    document.getElementById("locknote").textContent=allGroupsDone()?"":"Finish all group matches to seed the knockout bracket.";
+  }
+  window.addEventListener('resize',()=>{if(!document.getElementById("runView").classList.contains("hidden"))render();});
+
+  /* ---------------- RUN CONTROLS ---------------- */
+  document.getElementById("editSetup").onclick=()=>{
+    document.getElementById("runView").classList.add("hidden");
+    document.getElementById("setupView").classList.remove("hidden");
+    document.getElementById("subtitle").textContent="Enter your fighters, pick the format, and go";
+    renderRoster();window.scrollTo({top:0,behavior:'smooth'});
+  };
+  document.getElementById("resetScores").onclick=()=>{
+    Object.keys(T.results).forEach(L=>T.results[L]={});T.ko={};render();
+  };
+  document.getElementById("reshuffle").onclick=()=>{buildTournament();render();};
+
+  // init
+  renderRoster();
+</script>
+</body>
+</html>
